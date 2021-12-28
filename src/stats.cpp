@@ -754,8 +754,9 @@ void Stats::reportHtmlQuality(ofstream& ofs, string filteringType, string readNa
     ofs << "<div class='figure' id='plot_" + divName + "'></div>\n";
     ofs << "</div>\n";
     
-    string alphabets[5] = {"A", "T", "C", "G", "mean"};
-    string colors[5] = {"rgba(128,128,0,1.0)", "rgba(128,0,128,1.0)", "rgba(0,255,0,1.0)", "rgba(0,0,255,1.0)", "rgba(20,20,20,1.0)"};
+    string alphabets[7] = {"A", "T", "C", "G", "mean", "Q20", "Q30"};
+    // grey, purple, green, blue, black, red, yellow
+    string colors[7] = {"rgba(128,128,0,1.0)", "rgba(128,0,128,1.0)", "rgba(0,255,0,1.0)", "rgba(0,0,255,1.0)", "rgba(20,20,20,1.0)", "rgba(255,0,0,1.0)", "rgba(255,255,0,1.0)"};
     ofs << "\n<script type=\"text/javascript\">" << endl;
     string json_str = "var data=[";
 
@@ -790,7 +791,7 @@ void Stats::reportHtmlQuality(ofstream& ofs, string filteringType, string readNa
         }
     }
     // four bases
-    for (int b = 0; b<5; b++) {
+    for (int b = 0; b<7; b++) {
         string base = alphabets[b];
         json_str += "{";
         json_str += "x:[" + list2string(x, total) + "],";

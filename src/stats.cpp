@@ -433,7 +433,7 @@ void Stats::reportJson(ofstream& ofs, string padding) {
         }
         ofs << "]";
         // not the end;
-        if(i != 5-1)
+        if(i != 7-1)
             ofs << ",";
         ofs << endl; 
     }

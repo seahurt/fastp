@@ -163,6 +163,14 @@ void Stats::summarize(bool forced) {
         mQ30Total += mQ30Bases[i];
     }
 
+    auto mQ20BaseCountPerCycle = new uint64_t[mCycles];
+    auto mQ30BaseCountPerCycle = new uint64_t[mCycles];
+    for (int c=0; c<mCycles;c++){
+        for (int i=0;i<8;i++){
+            mQ20BaseCountPerCycle[c] += mCycleQ20Bases[i][c];
+            mQ30BaseCountPerCycle[c] += mCycleQ30Bases[i][c];
+        }
+    }
 
     // quality curve for mean qual
     double* meanQualCurve = new double[mCycles];
@@ -171,6 +179,22 @@ void Stats::summarize(bool forced) {
         meanQualCurve[c] = (double)mCycleTotalQual[c] / (double)mCycleTotalBase[c];
     }
     mQualityCurves["mean"] = meanQualCurve;
+
+    // quality curve for Q20
+    double* q20QualCurve = new double[mCycles];
+    memset(q20QualCurve, 0, sizeof(double)*mCycles);
+    for(int c=0; c<mCycles; c++) {
+        q20QualCurve[c] = (double)mQ20BaseCountPerCycle[c] / (double)mReads;
+    }
+    mQualityCurves["Q20"] = q20QualCurve;
+
+    // quality curve for Q30
+    double* q30QualCurve = new double[mCycles];
+    memset(q30QualCurve, 0, sizeof(double)*mCycles);
+    for(int c=0; c<mCycles; c++) {
+        q30QualCurve[c] = (double)mQ30BaseCountPerCycle[c] / (double)mReads;
+    }
+    mQualityCurves["Q30"] = q30QualCurve;
 
     // quality curves and base content curves for different nucleotides
     char alphabets[5] = {'A', 'T', 'C', 'G', 'N'};
@@ -393,7 +417,7 @@ void Stats::reportJson(ofstream& ofs, string padding) {
     ofs << padding << "\t" << "\"total_cycles\": " << mCycles << "," << endl;
 
     // quality curves
-    string qualNames[5] = {"A", "T", "C", "G", "mean"};
+    string qualNames[7] = {"A", "T", "C", "G", "mean", "Q20", "Q30"};
     ofs << padding << "\t" << "\"quality_curves\": {" << endl;
     for(int i=0 ;i<5; i++) {
         string name=qualNames[i];

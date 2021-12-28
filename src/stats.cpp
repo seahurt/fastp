@@ -419,7 +419,7 @@ void Stats::reportJson(ofstream& ofs, string padding) {
     // quality curves
     string qualNames[7] = {"A", "T", "C", "G", "mean", "Q20", "Q30"};
     ofs << padding << "\t" << "\"quality_curves\": {" << endl;
-    for(int i=0 ;i<5; i++) {
+    for(int i=0 ;i<7; i++) {
         string name=qualNames[i];
         double* curve = mQualityCurves[name];
         ofs << padding << "\t\t" << "\"" << name << "\":[";

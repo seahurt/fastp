@@ -164,7 +164,9 @@ void Stats::summarize(bool forced) {
     }
 
     auto mQ20BaseCountPerCycle = new uint64_t[mCycles];
+    memset(mQ20BaseCountPerCycle, 0, sizeof(uint64_t)*mCycles);
     auto mQ30BaseCountPerCycle = new uint64_t[mCycles];
+    memset(mQ30BaseCountPerCycle, 0, sizeof(uint64_t)*mCycles);
     for (int c=0; c<mCycles;c++){
         for (int i=0;i<8;i++){
             mQ20BaseCountPerCycle[c] += mCycleQ20Bases[i][c];
@@ -184,7 +186,7 @@ void Stats::summarize(bool forced) {
     double* q20QualCurve = new double[mCycles];
     memset(q20QualCurve, 0, sizeof(double)*mCycles);
     for(int c=0; c<mCycles; c++) {
-        q20QualCurve[c] = (double)mQ20BaseCountPerCycle[c] / (double)mReads;
+        q20QualCurve[c] = (double)mQ20BaseCountPerCycle[c] / (double)mCycleTotalBase[c] * 100;
     }
     mQualityCurves["Q20"] = q20QualCurve;
 
@@ -192,7 +194,7 @@ void Stats::summarize(bool forced) {
     double* q30QualCurve = new double[mCycles];
     memset(q30QualCurve, 0, sizeof(double)*mCycles);
     for(int c=0; c<mCycles; c++) {
-        q30QualCurve[c] = (double)mQ30BaseCountPerCycle[c] / (double)mReads;
+        q30QualCurve[c] = (double)mQ30BaseCountPerCycle[c] / (double)mCycleTotalBase[c] * 100;
     }
     mQualityCurves["Q30"] = q30QualCurve;
 

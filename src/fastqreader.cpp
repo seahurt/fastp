@@ -130,6 +130,13 @@ void FastqReader::readToBufIgzip(){
 			}
 		}
 	}
+
+	if(eof() && mGzipState.avail_in == 0) {
+		// all data was processed - fail if not at logical end of zip file (truncated?)
+		if (mGzipState.block_state != ISAL_BLOCK_FINISH || !mGzipState.bfinal) {
+			error_exit("igzip: unexpected eof");
+		}
+	}
 }
 
 void FastqReader::readToBuf() {
@@ -245,6 +252,12 @@ void FastqReader::getLine(string* line){
 		readToBuf();
 		start = 0;
 		end = 0;
+		// handle the case that \r or \n in the start of buf
+		if(line->empty()) {
+			while(start < mBufDataLen && (mFastqBuf[start] == '\r' || mFastqBuf[start] == '\n'))
+				start++;
+			end = start;
+		}
 		while(end < mBufDataLen) {
 			if(mFastqBuf[end] != '\r' && mFastqBuf[end] != '\n')
 				end++;
@@ -303,7 +316,6 @@ Read* FastqReader::read(){
 	while((name->empty() && !(mBufUsedLen >= mBufDataLen && bufferFinished())) || (!name->empty() && (*name)[0]!='@')){
 		getLine(name);
 	}
-
 	if(name->empty())
 		return NULL;
 
@@ -311,12 +323,20 @@ Read* FastqReader::read(){
 	getLine(strand);
 	getLine(quality);
 
+	if (strand->empty() || (*strand)[0]!='+') {
+		cerr << *name << endl;
+		cerr << "Expected '+', got " << *strand << endl;
+		cerr << "Your FASTQ may be invalid, please check the tail of your FASTQ file" << endl;
+		return NULL;
+	}
+
 	if(quality->length() != sequence->length()) {
 		cerr << "ERROR: sequence and quality have different length:" << endl;
 		cerr << *name << endl;
 		cerr << *sequence << endl;
 		cerr << *strand << endl;
 		cerr << *quality << endl;
+		cerr << "Your FASTQ may be invalid, please check the tail of your FASTQ file" << endl;
 		return NULL;
 	}
 

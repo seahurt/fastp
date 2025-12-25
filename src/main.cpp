@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
         return 0;
     }
     if (argc == 2 && (strcmp(argv[1], "-v")==0 || strcmp(argv[1], "--version")==0)){
-        cerr << "fastp " << FASTP_VER << endl;
+        cout << "fastp " << FASTP_VER << endl;
         return 0;
     }
     cmdline::parser cmd;
@@ -57,7 +57,8 @@ int main(int argc, char* argv[]){
     cmd.add<string>("adapter_sequence", 'a', "the adapter for read1. For SE data, if not specified, the adapter will be auto-detected. For PE data, this is used if R1/R2 are found not overlapped.", false, "auto");
     cmd.add<string>("adapter_sequence_r2", 0, "the adapter for read2 (PE data only). This is used if R1/R2 are found not overlapped. If not specified, it will be the same as <adapter_sequence>", false, "auto");
     cmd.add<string>("adapter_fasta", 0, "specify a FASTA file to trim both read1 and read2 (if PE) by all the sequences in this FASTA file", false, "");
-    cmd.add("detect_adapter_for_pe", 0, "by default, the auto-detection for adapter is for SE data input only, turn on this option to enable it for PE data.");
+    cmd.add("detect_adapter_for_pe", '2', "enable adapter detection for PE data to get ultra-clean data. It takes more time to find just a little bit more adapters.");
+    cmd.add("allow_gap_overlap_trimming", 0, "allow up to one gap when trim adapters by overlap analysis for PE data. By default no gap is allowed.");
 
     // trimming
     cmd.add<int>("trim_front1", 'f', "trimming how many bases in front for read1, default is 0", false, 0);
@@ -128,6 +129,7 @@ int main(int argc, char* argv[]){
     cmd.add<int>("umi_len", 0, "if the UMI is in read1/read2, its length should be provided", false, 0);
     cmd.add<string>("umi_prefix", 0, "if specified, an underline will be used to connect prefix and UMI (i.e. prefix=UMI, UMI=AATTCG, final=UMI_AATTCG). No prefix by default", false, "");
     cmd.add<int>("umi_skip", 0, "if the UMI is in read1/read2, fastp can skip several bases following UMI, default is 0", false, 0);
+    cmd.add<string>("umi_delim", 0, "delimiter to use between the read name and the UMI, default is :", false, ":");
 
     // overrepresented sequence analysis
     cmd.add("overrepresentation_analysis", 'p', "enable overrepresented sequence analysis.");
@@ -156,6 +158,13 @@ int main(int argc, char* argv[]){
 
     if(argc == 1) {
         cerr << cmd.usage() <<endl;
+    }
+
+    if(argc == 1) {
+        //output citation information
+        cerr << "Citation:" <<endl;
+        cerr << "Shifu Chen. 2023. Ultrafast one-pass FASTQ data preprocessing, quality control, and deduplication using fastp. iMeta 2: e107" << endl;
+        cerr << endl;
         return 0;
     }
 
@@ -207,6 +216,7 @@ int main(int argc, char* argv[]){
     // adapter cutting
     opt.adapter.enabled = !cmd.exist("disable_adapter_trimming");
     opt.adapter.detectAdapterForPE = cmd.exist("detect_adapter_for_pe");
+    opt.adapter.allowGapOverlapTrimming = cmd.exist("allow_gap_overlap_trimming");
     opt.adapter.sequence = cmd.get<string>("adapter_sequence");
     opt.adapter.sequenceR2 = cmd.get<string>("adapter_sequence_r2");
     opt.adapter.fastaFile = cmd.get<string>("adapter_fasta");
@@ -311,7 +321,7 @@ int main(int argc, char* argv[]){
             || cmd.exist("cut_front_window_size") || cmd.exist("cut_front_mean_quality") 
             || cmd.exist("cut_tail_window_size") || cmd.exist("cut_tail_mean_quality") 
             || cmd.exist("cut_right_window_size") || cmd.exist("cut_right_mean_quality"))
-            cerr << "WARNING: you specified the options for cutting by quality, but forogt to enable any of cut_front/cut_tail/cut_right. This will have no effect." << endl;
+            cerr << "WARNING: you specified the options for cutting by quality, but forgot to enable any of cut_front/cut_tail/cut_right. This will have no effect." << endl;
     }
 
     // quality filtering
@@ -376,6 +386,7 @@ int main(int argc, char* argv[]){
     opt.umi.length = cmd.get<int>("umi_len");
     opt.umi.prefix = cmd.get<string>("umi_prefix");
     opt.umi.skip = cmd.get<int>("umi_skip");
+    opt.umi.delimiter = cmd.get<string>("umi_delim");
     if(opt.umi.enabled) {
         string umiLoc = cmd.get<string>("umi_loc");
         str2lower(umiLoc);

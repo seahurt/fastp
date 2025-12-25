@@ -108,6 +108,7 @@ public:
         location = UMI_LOC_NONE;
         length = 0;
         skip = 0;
+        delimiter= ":";
     }
 public:
     bool enabled;
@@ -116,6 +117,7 @@ public:
     int skip;
     string prefix;
     string separator;
+    string delimiter;
 };
 
 class CorrectionOptions {
@@ -199,6 +201,7 @@ public:
         hasSeqR1 = false;
         hasSeqR2 = false;
         detectAdapterForPE = false;
+        allowGapOverlapTrimming = false;
     }
 public:
     bool enabled;
@@ -212,6 +215,7 @@ public:
     bool hasSeqR2;
     bool hasFasta;
     bool detectAdapterForPE;
+    bool allowGapOverlapTrimming;
 };
 
 class TrimmingOptions {

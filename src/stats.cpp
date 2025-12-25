@@ -166,6 +166,16 @@ void Stats::summarize(bool forced) {
         mQ30Total += mQ30Bases[i];
     }
 
+    auto mQ20BaseCountPerCycle = new uint64_t[mCycles];
+    memset(mQ20BaseCountPerCycle, 0, sizeof(uint64_t)*mCycles);
+    auto mQ30BaseCountPerCycle = new uint64_t[mCycles];
+    memset(mQ30BaseCountPerCycle, 0, sizeof(uint64_t)*mCycles);
+    for (int c=0; c<mCycles;c++){
+        for (int i=0;i<8;i++){
+            mQ20BaseCountPerCycle[c] += mCycleQ20Bases[i][c];
+            mQ30BaseCountPerCycle[c] += mCycleQ30Bases[i][c];
+        }
+    }
     for(char c=40; c<127-33; c++) {
         mQ40Total += mBaseQualHistogram[c+33];
     }
@@ -178,6 +188,22 @@ void Stats::summarize(bool forced) {
         meanQualCurve[c] = (double)mCycleTotalQual[c] / (double)mCycleTotalBase[c];
     }
     mQualityCurves["mean"] = meanQualCurve;
+
+    // quality curve for Q20
+    double* q20QualCurve = new double[mCycles];
+    memset(q20QualCurve, 0, sizeof(double)*mCycles);
+    for(int c=0; c<mCycles; c++) {
+        q20QualCurve[c] = (double)mQ20BaseCountPerCycle[c] / (double)mCycleTotalBase[c] * 100;
+    }
+    mQualityCurves["Q20"] = q20QualCurve;
+
+    // quality curve for Q30
+    double* q30QualCurve = new double[mCycles];
+    memset(q30QualCurve, 0, sizeof(double)*mCycles);
+    for(int c=0; c<mCycles; c++) {
+        q30QualCurve[c] = (double)mQ30BaseCountPerCycle[c] / (double)mCycleTotalBase[c] * 100;
+    }
+    mQualityCurves["Q30"] = q30QualCurve;
 
     // quality curves and base content curves for different nucleotides
     char alphabets[5] = {'A', 'T', 'C', 'G', 'N'};
@@ -414,9 +440,9 @@ void Stats::reportJson(ofstream& ofs, string padding) {
     ofs << padding << "\t" << "\"total_cycles\": " << mCycles << "," << endl;
 
     // quality curves
-    string qualNames[5] = {"A", "T", "C", "G", "mean"};
+    string qualNames[7] = {"A", "T", "C", "G", "mean", "Q20", "Q30"};
     ofs << padding << "\t" << "\"quality_curves\": {" << endl;
-    for(int i=0 ;i<5; i++) {
+    for(int i=0 ;i<7; i++) {
         string name=qualNames[i];
         double* curve = mQualityCurves[name];
         ofs << padding << "\t\t" << "\"" << name << "\":[";
@@ -428,7 +454,7 @@ void Stats::reportJson(ofstream& ofs, string padding) {
         }
         ofs << "]";
         // not the end;
-        if(i != 5-1)
+        if(i != 7-1)
             ofs << ",";
         ofs << endl; 
     }
@@ -751,8 +777,9 @@ void Stats::reportHtmlQuality(ofstream& ofs, string filteringType, string readNa
     ofs << "<div class='figure' id='plot_" + divName + "'></div>\n";
     ofs << "</div>\n";
     
-    string alphabets[5] = {"A", "T", "C", "G", "mean"};
-    string colors[5] = {"rgba(128,128,0,1.0)", "rgba(128,0,128,1.0)", "rgba(0,255,0,1.0)", "rgba(0,0,255,1.0)", "rgba(20,20,20,1.0)"};
+    string alphabets[7] = {"A", "T", "C", "G", "mean", "Q20", "Q30"};
+    // grey, purple, green, blue, black, red, yellow
+    string colors[7] = {"rgba(128,128,0,1.0)", "rgba(128,0,128,1.0)", "rgba(0,255,0,1.0)", "rgba(0,0,255,1.0)", "rgba(20,20,20,1.0)", "rgba(255,0,0,1.0)", "rgba(255,255,0,1.0)"};
     ofs << "\n<script type=\"text/javascript\">" << endl;
     string json_str = "var data=[";
 
@@ -787,7 +814,7 @@ void Stats::reportHtmlQuality(ofstream& ofs, string filteringType, string readNa
         }
     }
     // four bases
-    for (int b = 0; b<5; b++) {
+    for (int b = 0; b<7; b++) {
         string base = alphabets[b];
         json_str += "{";
         json_str += "x:[" + list2string(x, total) + "],";
